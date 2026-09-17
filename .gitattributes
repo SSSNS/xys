@@ -1,2 +1,2 @@
-site/Build/*.unityweb binary
-site/Build/*.unityweb.part-* binary
+docs/Build/*.unityweb binary
+docs/Build/*.unityweb.part-* binary

@@ -113,18 +113,35 @@
 
       var script = document.createElement("script");
       script.src = loaderUrl;
-      script.onload = () => {
-        createTuanjieInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-              }).then((tuanjieInstance) => {
-                loadingBar.style.display = "none";
-                fullscreenButton.onclick = () => {
-                  tuanjieInstance.SetFullscreen(1);
-                };
-              }).catch((message) => {
-                alert(message);
-              });
+      script.onload = async () => {
+        try {
+          var dataPartUrls = [
+            buildUrl + "/WebGL.data.unityweb.part-aa",
+            buildUrl + "/WebGL.data.unityweb.part-ab",
+          ];
+          var dataResponses = await Promise.all(dataPartUrls.map((url) => fetch(url)));
+          dataResponses.forEach((response) => {
+            if (!response.ok) throw new Error("Failed to download " + response.url + ": HTTP " + response.status);
+          });
+          var dataParts = await Promise.all(dataResponses.map((response) => response.arrayBuffer()));
+          config.dataUrl = URL.createObjectURL(new Blob(dataParts, { type: "application/octet-stream" }));
+
+          createTuanjieInstance(canvas, config, (progress) => {
+            progressBarFull.style.width = 100 * progress + "%";
+          }).then((tuanjieInstance) => {
+            URL.revokeObjectURL(config.dataUrl);
+            loadingBar.style.display = "none";
+            fullscreenButton.onclick = () => {
+              tuanjieInstance.SetFullscreen(1);
             };
+          }).catch((message) => {
+            URL.revokeObjectURL(config.dataUrl);
+            alert(message);
+          });
+        } catch (error) {
+          alert(error);
+        }
+      };
 
       document.body.appendChild(script);
 
